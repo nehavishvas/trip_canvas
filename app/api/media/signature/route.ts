@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { v2 as cloudinary } from 'cloudinary';
+import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,11 +16,12 @@ export async function GET() {
 
   const timestamp = Math.round(new Date().getTime() / 1000);
   const folder = 'trip-canvas';
+  const apiSecret = process.env.CLOUDINARY_API_SECRET as string;
 
-  const signature = cloudinary.utils.api_sign_request(
-    { timestamp, folder },
-    process.env.CLOUDINARY_API_SECRET as string
-  );
+  // Prepare parameters to sign (sorted alphabetically)
+  const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
+  const stringToSign = `${paramsToSign}${apiSecret}`;
+  const signature = crypto.createHash('sha1').update(stringToSign).digest('hex');
 
   return NextResponse.json({
     signature,
