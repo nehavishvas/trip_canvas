@@ -49,6 +49,17 @@ export const api = {
     return data;
   },
 
+  async register(credentials: { name: string; email: string; password?: string }) {
+    const data = await request('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+    }
+    return data;
+  },
+
   async logout() {
     await request('/api/auth/logout', { method: 'POST' });
     localStorage.removeItem('token');

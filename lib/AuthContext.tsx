@@ -14,6 +14,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password?: string) => Promise<any>;
+  register: (name: string, email: string, password?: string) => Promise<any>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -53,6 +54,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const register = async (name: string, email: string, password?: string) => {
+    try {
+      const data = await api.register({ name, email, password });
+      if (data && data.user) {
+        setUser(data.user);
+      }
+      return data;
+    } catch (error) {
+      setUser(null);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
       await api.logout();
@@ -71,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   );
