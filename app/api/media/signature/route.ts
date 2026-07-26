@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const isCloudinaryConfigured = !!(
     process.env.CLOUDINARY_CLOUD_NAME &&
@@ -28,3 +30,4 @@ export async function GET() {
     apiKey: process.env.CLOUDINARY_API_KEY,
   });
 }
+
