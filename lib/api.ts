@@ -117,6 +117,44 @@ export const api = {
 
   // Media
   async uploadMedia(files: File[]) {
+    try {
+      // 1. Check if direct upload is supported by getting a signature
+      const sigData = await request('/api/media/signature').catch(() => null);
+      if (sigData && sigData.signature) {
+        const uploadedFiles = [];
+        for (const file of files) {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('api_key', sigData.apiKey);
+          formData.append('timestamp', String(sigData.timestamp));
+          formData.append('signature', sigData.signature);
+          if (sigData.folder) {
+            formData.append('folder', sigData.folder);
+          }
+          
+          const resourceType = file.type.startsWith('video/') ? 'video' : 'auto';
+          const uploadUrl = `https://api.cloudinary.com/v1_1/${sigData.cloudName}/${resourceType}/upload`;
+          
+          const res = await fetch(uploadUrl, {
+            method: 'POST',
+            body: formData,
+          });
+          const result = await res.json();
+          if (!res.ok) throw new Error(result.error?.message || 'Upload failed');
+          
+          uploadedFiles.push({
+            file_url: result.secure_url,
+            file_type: result.resource_type === 'video' ? 'video' : 'image',
+            file_name: file.name
+          });
+        }
+        return { message: 'Files uploaded successfully', files: uploadedFiles };
+      }
+    } catch (e) {
+      console.warn('Direct upload failed or not configured, falling back to local upload API', e);
+    }
+
+    // Fallback to original behavior if signature fails or Cloudinary isn't configured
     const formData = new FormData();
     files.forEach((file) => formData.append('files', file));
     return request('/api/media/upload', {
