@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
-import { v2 as cloudinary } from 'cloudinary';
+import crypto from 'crypto';
 
 // Configure Cloudinary if credentials are present
 const isCloudinaryConfigured = !!(
@@ -10,27 +10,56 @@ const isCloudinaryConfigured = !!(
   process.env.CLOUDINARY_API_SECRET
 );
 
-if (isCloudinaryConfigured) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-  });
-}
+const isVercel = process.env.VERCEL === '1';
 
-// Helper to upload a buffer to Cloudinary via stream
-const uploadFromBuffer = (fileBuffer: Buffer): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { resource_type: 'auto', folder: 'trip-canvas' },
-      (error, result) => {
-        if (error) reject(error);
-        else resolve(result);
-      }
-    );
-    uploadStream.end(fileBuffer);
+// Upload a buffer to Cloudinary using standard fetch REST API (no SDK dependency)
+async function uploadToCloudinaryRest(fileBuffer: Buffer, fileName: string, fileExt: string): Promise<{ secure_url: string; resource_type: string }> {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    throw new Error('Cloudinary environment variables are missing');
+  }
+
+  let resourceType = 'image';
+  if (['.mp4', '.mov', '.webm', '.avi', '.mkv'].includes(fileExt.toLowerCase())) {
+    resourceType = 'video';
+  }
+
+  const timestamp = Math.round(new Date().getTime() / 1000);
+  const folder = 'trip-canvas';
+
+  // Prepare parameters to sign (sorted alphabetically)
+  const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
+  const stringToSign = `${paramsToSign}${apiSecret}`;
+  const signature = crypto.createHash('sha1').update(stringToSign).digest('hex');
+
+  const formData = new FormData();
+  const blob = new Blob([new Uint8Array(fileBuffer)]);
+  formData.append('file', blob, fileName);
+  formData.append('api_key', apiKey);
+  formData.append('timestamp', timestamp.toString());
+  formData.append('folder', folder);
+  formData.append('signature', signature);
+
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`;
+  const response = await fetch(url, {
+    method: 'POST',
+    body: formData,
   });
-};
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Cloudinary upload failed: ${response.statusText} - ${errorText}`);
+  }
+
+  const data = await response.json();
+  return {
+    secure_url: data.secure_url,
+    resource_type: data.resource_type,
+  };
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,6 +68,13 @@ export async function POST(request: NextRequest) {
 
     if (!files || files.length === 0) {
       return Response.json({ error: 'No files uploaded' }, { status: 400 });
+    }
+
+    if (isVercel && !isCloudinaryConfigured) {
+      return Response.json({
+        error: 'Missing Cloudinary Environment Variables',
+        message: 'Your Vercel deployment does not have Cloudinary configured. Please go to Vercel Dashboard -> Project Settings -> Environment Variables, and add: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.'
+      }, { status: 400 });
     }
 
     const uploadedFiles = [];
@@ -53,7 +89,7 @@ export async function POST(request: NextRequest) {
 
       if (isCloudinaryConfigured) {
         console.log(`Uploading ${originalName} to Cloudinary...`);
-        const result = await uploadFromBuffer(buffer);
+        const result = await uploadToCloudinaryRest(buffer, originalName, fileExt);
         fileUrl = result.secure_url;
         fileType = result.resource_type === 'video' ? 'video' : 'image';
       } else {
@@ -61,7 +97,6 @@ export async function POST(request: NextRequest) {
         const uploadDir = path.join(process.cwd(), 'public', 'uploads');
         await fs.mkdir(uploadDir, { recursive: true });
 
-        // Sanitise filename
         const fileBase = path.basename(originalName, fileExt)
           .replace(/[^a-zA-Z0-9]/g, '_')
           .toLowerCase();
