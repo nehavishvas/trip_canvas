@@ -129,7 +129,7 @@ export default function Carousel({ media }: CarouselProps) {
               onClick={() => setActiveIndex(index)}
               className={`relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-zinc-100 transition-all border-2 ${
                 index === activeIndex
-                  ? 'border-indigo-500 scale-[1.02] shadow-sm'
+                  ? 'border-amber-500 scale-[1.02] shadow-sm'
                   : 'border-transparent opacity-60 hover:opacity-100'
               }`}
             >

@@ -16,30 +16,12 @@ interface CommentsSectionProps {
   blogId: number;
 }
 
-// Default initial comments to seed a blog's discussion if none exist in localStorage
-const defaultComments: Comment[] = [
-  {
-    id: 1,
-    name: "Marcus Vance",
-    avatar: "M",
-    content: "This was an incredibly detailed read! The photography recommendations were spot on. Squeezing through that tiny cave entry sounds super thrilling.",
-    created_at: "2026-07-24T10:15:30.000Z"
-  },
-  {
-    id: 2,
-    name: "Sarah Lin",
-    avatar: "S",
-    content: "Excellent writeup. I really appreciate the emphasis on eco-tourism and regulations. El Nido is beautiful but keeping it pristine is critical.",
-    created_at: "2026-07-24T11:45:00.000Z"
-  }
-];
-
 export default function CommentsSection({ blogId }: CommentsSectionProps) {
   const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [authorName, setAuthorName] = useState('');
   const [commentText, setCommentText] = useState('');
-  const [likes, setLikes] = useState(12);
+  const [likes, setLikes] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
 
   // Sync state from localStorage on client side mount and when blogId changes
@@ -53,18 +35,17 @@ export default function CommentsSection({ blogId }: CommentsSectionProps) {
       try {
         setComments(JSON.parse(savedComments));
       } catch (e) {
-        setComments(defaultComments);
+        setComments([]);
       }
     } else {
-      setComments(defaultComments);
-      localStorage.setItem(commentsKey, JSON.stringify(defaultComments));
+      setComments([]);
     }
 
     const savedLikes = localStorage.getItem(likesKey);
     if (savedLikes) {
-      setLikes(parseInt(savedLikes, 10));
+      setLikes(parseInt(savedLikes, 10) || 0);
     } else {
-      setLikes(12);
+      setLikes(0);
     }
 
     const savedHasLiked = localStorage.getItem(hasLikedKey);
@@ -98,7 +79,7 @@ export default function CommentsSection({ blogId }: CommentsSectionProps) {
     let newLikes = likes;
     let newHasLiked = !hasLiked;
     if (hasLiked) {
-      newLikes = likes - 1;
+      newLikes = Math.max(0, likes - 1);
     } else {
       newLikes = likes + 1;
     }
@@ -111,7 +92,7 @@ export default function CommentsSection({ blogId }: CommentsSectionProps) {
   return (
     <div className="space-y-6">
       {/* Interaction counters */}
-      <div className="flex items-center gap-6 border-b border-zinc-100 pb-4 dark:border-zinc-900">
+      <div className="flex items-center gap-6 border-b border-zinc-150 pb-4 dark:border-zinc-800">
         <button 
           onClick={handleLike}
           className={`flex items-center gap-1.5 text-sm font-semibold transition-colors ${
@@ -138,7 +119,7 @@ export default function CommentsSection({ blogId }: CommentsSectionProps) {
             placeholder="Your Name"
             value={authorName}
             onChange={(e) => setAuthorName(e.target.value)}
-            className="w-full max-w-xs rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white"
+            className="w-full max-w-xs rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-amber-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white"
           />
         )}
 
@@ -149,11 +130,11 @@ export default function CommentsSection({ blogId }: CommentsSectionProps) {
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             required
-            className="w-full rounded-xl border border-zinc-200 bg-white p-3 pr-12 text-sm text-zinc-900 outline-none transition-all focus:border-indigo-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white"
+            className="w-full rounded-xl border border-zinc-200 bg-white p-3 pr-12 text-sm text-zinc-900 outline-none transition-all focus:border-amber-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-white"
           />
           <button
             type="submit"
-            className="absolute bottom-3 right-3 rounded-full bg-indigo-600 p-2 text-white hover:bg-indigo-700 active:scale-95 transition-all"
+            className="absolute bottom-3 right-3 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 p-2 text-white hover:from-amber-500 hover:to-orange-600 active:scale-95 transition-all shadow shadow-orange-500/10"
           >
             <Send className="h-3.5 w-3.5" />
           </button>
@@ -165,7 +146,7 @@ export default function CommentsSection({ blogId }: CommentsSectionProps) {
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-3 text-sm p-4 bg-zinc-50 rounded-2xl dark:bg-zinc-900/30">
             {/* Avatar block */}
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-zinc-150 text-xs font-bold text-zinc-650 dark:bg-zinc-850 dark:text-zinc-350">
               {comment.avatar}
             </div>
             
@@ -182,7 +163,7 @@ export default function CommentsSection({ blogId }: CommentsSectionProps) {
                   })}
                 </span>
               </div>
-              <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              <p className="text-zinc-650 dark:text-zinc-400 leading-relaxed">
                 {comment.content}
               </p>
             </div>
