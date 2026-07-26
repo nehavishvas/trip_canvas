@@ -119,7 +119,10 @@ export const api = {
   async uploadMedia(files: File[]) {
     try {
       // 1. Check if direct upload is supported by getting a signature
-      const sigData = await request('/api/media/signature').catch(() => null);
+      const sigData = await request('/api/media/signature').catch((err) => {
+        console.error('Failed to fetch upload signature:', err);
+        return null;
+      });
       if (sigData && sigData.signature) {
         const uploadedFiles = [];
         for (const file of files) {
