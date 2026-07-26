@@ -45,8 +45,9 @@ export default function AdminDashboard() {
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      // Fetch all blogs (both drafts and published)
-      const data = await api.getBlogs({ status: 'all' });
+      // Fetch blogs. Admins see all, authors see only their own.
+      const authorFilter = user?.role === 'author' ? { author: user.id } : {};
+      const data = await api.getBlogs({ status: 'all', ...authorFilter });
       if (data && data.blogs) {
         setBlogs(data.blogs);
       }

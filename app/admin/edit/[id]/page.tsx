@@ -66,6 +66,14 @@ export default function EditBlog({ params }: { params: Promise<{ id: string }> }
         const data = await api.getBlog(id);
         if (data && data.blog) {
           const blog = data.blog;
+          
+          // Double check frontend authorization (backend already blocks saves)
+          if (user?.role !== 'admin' && blog.author_id !== user?.id) {
+            alert('You are not authorized to edit this post.');
+            router.push('/admin');
+            return;
+          }
+
           setTitle(blog.title);
           setContent(blog.content);
           setCategoryId(blog.category_id.toString());
