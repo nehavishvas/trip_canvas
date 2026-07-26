@@ -1,0 +1,45 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Admin User",
+      "email": "admin@example.com",
+      "password_hash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+      "role": "admin",
+      "created_at": "2026-01-01T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "name": "Jane Doe",
+      "email": "author@example.com",
+      "password_hash": "e6ca3a479ff737fb277852f8de3860bb4787a7187ad39999052d9a6c9e9007bf",
+      "role": "author",
+      "created_at": "2026-01-10T12:00:00.000Z"
+    },
+    {
+      "id": 3,
+      "name": "John Smith",
+      "email": "writer@example.com",
+      "password_hash": "63f733190ab7a224f46f3a61d157dfbfbbbf88ef050aa59d28ee8d8d38864700",
+      "role": "author",
+      "created_at": "2026-01-15T14:30:00.000Z"
+    }
+  ],
+  "categories": [
+    { "id": 1, "name": "Travel", "slug": "travel" },
+    { "id": 2, "name": "Technology", "slug": "technology" },
+    { "id": 3, "name": "Lifestyle", "slug": "lifestyle" },
+    { "id": 4, "name": "Design", "slug": "design" }
+  ],
+  "tags": [
+    { "id": 1, "name": "Adventure", "slug": "adventure" },
+    { "id": 2, "name": "Wanderlust", "slug": "wanderlust" },
+    { "id": 3, "name": "Coding", "slug": "coding" },
+    { "id": 4, "name": "Next.js", "slug": "nextjs" },
+    { "id": 5, "name": "Minimalist", "slug": "minimalist" },
+    { "id": 6, "name": "Productivity", "slug": "productivity" }
+  ],
+  "blogs": [],
+  "blog_tags": [],
+  "media": []
+}
