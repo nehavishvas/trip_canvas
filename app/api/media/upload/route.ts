@@ -90,8 +90,12 @@ export async function POST(request: NextRequest) {
       files: uploadedFiles
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in media upload handler:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({
+      error: 'Internal server error',
+      message: error.message || String(error),
+      stack: error.stack
+    }, { status: 500 });
   }
 }
