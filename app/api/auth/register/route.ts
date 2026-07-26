@@ -41,9 +41,8 @@ export async function POST(request: Request) {
       // Hash password using SHA-256 to match login logic
       const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
 
-      // Default role to 'author' so they can publish immediately (based on prompt implication for user features)
-      // or 'user' if strictly keeping it to user. Let's make it 'user' as per schema default, but allow author if they want.
-      const role = 'author'; 
+      // Default role to 'author' so they can publish immediately
+      const role: 'author' = 'author'; 
       const createdAt = new Date();
 
       const [result]: any = await connection.query(
